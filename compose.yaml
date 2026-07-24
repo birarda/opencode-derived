@@ -28,10 +28,12 @@ services:
       - opencode-data:/home/opencode/.local/share/opencode
       - opencode-cache:/home/opencode/.cache
       - cargo-data:/home/opencode/.cargo
+      - npm-cache:/home/opencode/.npm
       - gh-data:/home/opencode/.config/gh
 
 volumes:
   opencode-data:
   opencode-cache:
   cargo-data:
+  npm-cache:
   gh-data:

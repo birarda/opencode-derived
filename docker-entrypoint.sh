@@ -52,6 +52,7 @@ mkdir -p \
     /home/opencode/.local/share/opencode \
     /home/opencode/.cache \
     /home/opencode/.cargo \
+    /home/opencode/.npm \
     /home/opencode/.config/gh
 
 # Fix the small home/state tree, but do not recursively scan a potentially

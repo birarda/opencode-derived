@@ -8,6 +8,8 @@ RUN apk add --no-cache \
     ca-certificates \
     cargo \
     rust-clippy \
+    nodejs \
+    npm \
     git \
     github-cli \
     openssh-client \
@@ -29,6 +31,7 @@ RUN addgroup -g "${DEFAULT_GID}" opencode \
         /home/opencode/.local/share/opencode \
         /home/opencode/.cache \
         /home/opencode/.cargo \
+        /home/opencode/.npm \
         /home/opencode/.config/gh \
     && chown -R opencode:opencode /workspace /home/opencode
 
