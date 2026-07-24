@@ -1,0 +1,37 @@
+services:
+  opencode:
+    build:
+      context: .
+      args:
+        DEFAULT_UID: "1000"
+        DEFAULT_GID: "1000"
+
+    image: local/opencode-rust:latest
+    container_name: opencode
+    hostname: opencode
+    restart: unless-stopped
+    init: true
+
+    environment:
+      PUID: "${PUID:-1000}"
+      PGID: "${PGID:-1000}"
+      OPENCODE_SERVER_PASSWORD: "${OPENCODE_SERVER_PASSWORD:?Set OPENCODE_SERVER_PASSWORD in .env}"
+
+    working_dir: /workspace
+
+    ports:
+      - "127.0.0.1:4096:4096"
+
+    volumes:
+      - ./workspace:/workspace
+      - ./config:/home/opencode/.config/opencode
+      - opencode-data:/home/opencode/.local/share/opencode
+      - opencode-cache:/home/opencode/.cache
+      - cargo-data:/home/opencode/.cargo
+      - gh-data:/home/opencode/.config/gh
+
+volumes:
+  opencode-data:
+  opencode-cache:
+  cargo-data:
+  gh-data:
