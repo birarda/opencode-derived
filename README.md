@@ -4,7 +4,7 @@ This project builds on the official OpenCode container and adds:
 
 - Rust, Cargo, Clippy, Rustfmt, and native build tools
 - Git and GitHub CLI (`gh`)
-- runtime `PUID`/`PGID` mapping
+- portable runtime `PUID`/`PGID` handling
 - a non-root `opencode` account
 - `opencode serve --hostname 0.0.0.0 --port 4096` by default
 - Docker Compose's built-in init process via `init: true`
@@ -29,6 +29,13 @@ id -g
 On macOS, the defaults normally work with Docker Desktop, or you can use the
 IDs returned by those commands.
 
+For Unraid, the conventional values are:
+
+```dotenv
+PUID=99
+PGID=100
+```
+
 ## Start
 
 ```sh
@@ -48,8 +55,17 @@ docker compose exec opencode cargo --version
 docker compose exec opencode gh --version
 ```
 
-The first command should show the configured numeric IDs associated with the
-`opencode` account.
+The first command should show the configured numeric IDs. It normally displays
+the bundled `opencode` account when the IDs are available. If the IDs already
+belong to an account in the image, it may display that existing name instead.
+For example, Unraid's `99:100` convention usually appears as:
+
+```text
+uid=99(nobody) gid=100(users)
+```
+
+This is expected. Linux applies filesystem permissions using numeric IDs, not
+their display names.
 
 ## Persistent paths
 
@@ -60,12 +76,17 @@ The first command should show the configured numeric IDs associated with the
 - `cargo-data` — Cargo state
 - `gh-data` — GitHub CLI authentication
 
-The entrypoint starts as root only long enough to update the `opencode`
-account and prepare its home directories. It then uses `su-exec` to launch
-OpenCode with the configured non-root UID and GID.
+The entrypoint starts as root only long enough to prepare the home directories
+and, when safe, remap the bundled `opencode` account. If the requested IDs
+already belong to another account or group, those existing records are
+preserved. It then uses `su-exec` to launch OpenCode with the configured
+numeric, non-root UID and GID.
+
+OpenCode always uses `/home/opencode` as its application home, even when tools
+such as `id` display another existing account name.
 
 Do not add a Compose `user:` setting: the entrypoint needs its initial root
-privileges to perform the runtime ID mapping.
+privileges to prepare directories and perform safe runtime ID mapping.
 
 ## Komodo
 

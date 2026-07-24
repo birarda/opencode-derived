@@ -26,24 +26,24 @@ validate_id "PUID" "$PUID"
 validate_id "PGID" "$PGID"
 
 current_uid="$(id -u "$USERNAME")"
-current_gid="$(id -g "$USERNAME")"
+existing_user="$(getent passwd "$PUID" | cut -d: -f1 || true)"
+existing_group="$(getent group "$PGID" | cut -d: -f1 || true)"
 
-if [[ "$current_gid" != "$PGID" ]]; then
-    existing_group="$(getent group "$PGID" | cut -d: -f1 || true)"
-    if [[ -n "$existing_group" && "$existing_group" != "$GROUPNAME" ]]; then
-        echo "PGID ${PGID} is already assigned to group '${existing_group}'." >&2
-        exit 1
+# Preserve existing identities such as Unraid's nobody:users (99:100).
+# If the requested UID is unused—or already belongs to our bundled account—
+# remap the account for friendlier username output. Otherwise, leave passwd
+# and group records untouched and launch with the numeric IDs below.
+if [[ -z "$existing_user" || "$existing_user" == "$USERNAME" ]]; then
+    if [[ -n "$existing_group" ]]; then
+        usermod -g "$existing_group" "$USERNAME"
+    else
+        groupmod -g "$PGID" "$GROUPNAME"
+        usermod -g "$GROUPNAME" "$USERNAME"
     fi
-    groupmod -g "$PGID" "$GROUPNAME"
-fi
 
-if [[ "$current_uid" != "$PUID" ]]; then
-    existing_user="$(getent passwd "$PUID" | cut -d: -f1 || true)"
-    if [[ -n "$existing_user" && "$existing_user" != "$USERNAME" ]]; then
-        echo "PUID ${PUID} is already assigned to user '${existing_user}'." >&2
-        exit 1
+    if [[ "$current_uid" != "$PUID" ]]; then
+        usermod -u "$PUID" "$USERNAME"
     fi
-    usermod -u "$PUID" "$USERNAME"
 fi
 
 mkdir -p \
@@ -64,4 +64,6 @@ export USER="$USERNAME"
 export LOGNAME="$USERNAME"
 export CARGO_HOME=/home/opencode/.cargo
 
+# Numeric execution works whether the IDs map to opencode, an existing
+# platform account such as nobody:users, or no named account at all.
 exec su-exec "${PUID}:${PGID}" "$@"
