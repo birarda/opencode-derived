@@ -7,7 +7,7 @@ RUN apk add --no-cache \
     build-base \
     ca-certificates \
     cargo \
-    clippy \
+    rust-clippy \
     git \
     github-cli \
     openssh-client \
